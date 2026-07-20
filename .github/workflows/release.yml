@@ -1,10 +1,21 @@
 name: Release
 
-# Tag a commit `vX.Y.Z` and push the tag to produce a GitHub Release with
-# universal, model-bundled DMGs for both apps.
+# Two ways to produce a GitHub Release with universal, model-bundled DMGs
+# for both apps:
+#   1. push a `vX.Y.Z` tag, or
+#   2. Actions tab → Release → "Run workflow" and enter a version
+#      (the release + tag are created on the selected branch's head).
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 1.0.0 (tag v<version> will be created)"
+        required: true
+
+env:
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
 
 permissions:
   contents: write
@@ -40,23 +51,21 @@ jobs:
         env:
           UNIVERSAL: "1"
           BUNDLE_MODEL: "1"
-          VERSION: ${{ github.ref_name }}
         run: |
-          export VERSION="${VERSION#v}"
+          export VERSION="${RELEASE_TAG#v}"
           scripts/bundle-app.sh CapsBlink
           scripts/bundle-app.sh CapsBlinkAgents
 
       - name: Build DMGs
-        env:
-          VERSION: ${{ github.ref_name }}
         run: |
-          export VERSION="${VERSION#v}"
+          export VERSION="${RELEASE_TAG#v}"
           scripts/make-dmg.sh CapsBlink
           scripts/make-dmg.sh CapsBlinkAgents
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
           files: dist/*.dmg
           generate_release_notes: true
           body: |

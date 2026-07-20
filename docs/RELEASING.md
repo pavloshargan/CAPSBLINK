@@ -11,10 +11,14 @@ No setup or secrets are required; workflows use the default `GITHUB_TOKEN`. Mode
 
 ## Cutting a release
 
+Either push a tag:
+
 ```sh
 git tag v1.0.0
 git push origin v1.0.0
 ```
+
+or use the Actions tab → **Release** → *Run workflow* and enter the version (e.g. `1.0.0`); the workflow creates the `v1.0.0` tag and release from the selected branch's head.
 
 The release workflow then: fetches the pinned llama.cpp xcframework (cached) → fetches + verifies the model (cached) → runs tests → builds universal binaries → assembles both `.app` bundles (model inside CapsBlink) → wraps DMGs → creates the GitHub Release with install notes.
 
