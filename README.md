@@ -1,13 +1,21 @@
 # CapsBlink
 
-Two tiny native macOS utilities that get your attention by **blinking the Caps Lock LED** — without ever toggling the actual Caps Lock state:
+<img src="docs/demo.gif" width="340" alt="Caps Lock LED blinking on a Magic Keyboard when the watched page changes" />
+
+2 tools that capitalize on one cool hack — blinking the LED light on your keyboard.
+
+The first one can alert Claude Code status change via LED light, without additional hardware, like the one released by OpenAI a few days ago for Codex.
+
+The other one is even more advanced — during the World Cup I sometimes monitored the live score using a Google search when I didn't have time to watch the game, and it was annoying looking at the live score all the time, refreshing the page. So the tool will accept a URL to any web page, and you instruct it when to blink the LED via a prompt. E.g. *blink when the game score changes*. A local small LLM analyses the fetched page content and determines whether the LED should be triggered.
+
+It also works with the wireless keyboard, so you can leave your laptop and wait for the light to blink.
 
 | App | What it watches | When it blinks |
 | --- | --- | --- |
 | **CapsBlink** | Any webpage (paste a URL) | A local LLM decides the page changed in a way you care about — a score changed, a match finished, a status flipped. The default prompt is tuned for live sports pages and is fully editable in Settings, so any page works. |
 | **CapsBlink Agents** | Local coding agents (**Claude Code**, **Codex CLI**) | An agent finishes its turn and is waiting for you. The popover shows a per-agent indicator (idle / working / finished). |
 
-Everything runs **locally**: no cloud APIs, no accounts, no telemetry. The only network traffic is fetching the page you asked to watch (and a one-time model download if you use a build without a bundled model).
+Everything runs **locally**: no cloud APIs, no accounts, no telemetry. The only network traffic is fetching the page you asked to watch (and a one-time model download if you use a build without a bundled model). The LED is driven through the keyboard's HID output element, so the actual Caps Lock state never changes while it blinks.
 
 ## How CapsBlink works
 
