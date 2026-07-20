@@ -1,6 +1,6 @@
 # CapsBlink
 
-Two tiny native macOS menu bar utilities that get your attention by **blinking the Caps Lock LED** — without ever toggling the actual Caps Lock state:
+Two tiny native macOS utilities that get your attention by **blinking the Caps Lock LED** — without ever toggling the actual Caps Lock state:
 
 | App | What it watches | When it blinks |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ Everything runs **locally**: no cloud APIs, no accounts, no telemetry. The only 
 
 ## Install
 
-Grab the DMG for either app from [Releases](../../releases), drag it to Applications, launch. The menu bar gets a ⇪ icon.
+Grab the DMG for either app from [Releases](../../releases), drag it to Applications, launch. **CapsBlink** opens a settings window (URL, enable checkbox, prompt, interval); **CapsBlink Agents** lives in the menu bar as a ⇪ icon.
 
 - Release DMGs are **universal** (Apple Silicon + Intel) and ship with the model **bundled** — no extra downloads.
 - The apps are ad-hoc signed: on first launch use right-click → Open (or `xattr -cr /Applications/CapsBlink.app`).
@@ -52,7 +52,7 @@ Sources/
   CapsBlinkKit/       reusable core: fetch, extract, diff, LED, persistence, watch loop
   CapsBlinkLlama/     llama.cpp session + grammar-constrained classifier
   CapsBlinkAgentKit/  FSEvents-based Claude Code / Codex activity monitor
-  CapsBlink/          page-watcher menu bar app
+  CapsBlink/          page-watcher app (settings window)
   CapsBlinkAgents/    coding-agent menu bar app
 Tests/                unit tests per module
 scripts/              fetch-llama, fetch-model, bundle-app, make-dmg
