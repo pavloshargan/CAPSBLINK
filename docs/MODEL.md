@@ -12,13 +12,15 @@
 
 ## How the model reaches users
 
-1. **Repository weights policy**: weights are never committed to git. They live as assets on the `models-v1` GitHub release, mirrored from Hugging Face by the manually-triggered *"Publish model release asset"* workflow (`.github/workflows/model-release.yml`).
+1. **Repository weights policy**: weights are never committed to git. The canonical source is the upstream Hugging Face file, pinned by SHA-256.
 2. **Release builds** (`release.yml`): `scripts/fetch-model.sh` downloads + checksum-verifies the GGUF, and `BUNDLE_MODEL=1 scripts/bundle-app.sh` copies it into `CapsBlink.app/Contents/Resources/Models/`. Users get a fully self-contained DMG.
 3. **Runtime fallback** (dev builds, CI artifacts without a model): `ModelManager` looks for the model in this order —
    1. `CAPSBLINK_MODEL_PATH` env var,
    2. the app bundle's `Models/` resources,
    3. `~/Library/Application Support/CapsBlink/Models/`,
-   and if absent downloads it (release asset first, Hugging Face fallback), showing progress in the status row and verifying the SHA-256 before use.
+   and if absent downloads it, showing progress in the status row and verifying the SHA-256 before use.
+
+Both the script and `ModelSpec` try a `models-v1` release asset on this repo *before* Hugging Face. That release doesn't need to exist (the 404 falls through instantly) — it's an optional hook: if upstream availability ever worries you, upload the GGUF as a release asset under tag `models-v1` and everything prefers it automatically.
 
 ## Replacing or upgrading the model
 
@@ -32,9 +34,10 @@ Procedure:
 1. Pick a GGUF chat model that llama.cpp (at the pinned tag, see below) supports. For this workload prefer small instruct models (0.5–3 B) at Q4_K_M.
 2. Get its SHA-256 and size, e.g. from the Hugging Face API (`lfs.oid` on the file entry) or `shasum -a 256` after downloading.
 3. Update the two places above.
-4. Run the *"Publish model release asset"* workflow to mirror the new file to the `models-v1` release (or bump `MODEL_RELEASE_TAG`/the URL if you want versioned model tags).
-5. `make model && make test` locally, then sanity-check a real watch session (`CAPSBLINK_MODEL_PATH` also works for quick A/B tests).
-6. Tag a release.
+4. `make model && make test` locally, then run the real-inference smoke test:
+   `CAPSBLINK_SMOKE_MODEL=Models/<file>.gguf swift test --filter LlamaSmokeTests`
+   (`CAPSBLINK_MODEL_PATH` also works for quick A/B tests in the app).
+5. Tag a release.
 
 No code changes are needed for a different chat template — the template is read from the GGUF metadata (`llama_model_chat_template`) with a ChatML fallback.
 

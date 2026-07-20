@@ -6,12 +6,8 @@
 | --- | --- | --- |
 | `ci.yml` | push to `main`, PRs | build + tests + ad-hoc-signed .app zips (no model) as CI artifacts |
 | `release.yml` | push a `v*` tag | GitHub Release with universal DMGs for **both** apps, model bundled |
-| `model-release.yml` | manual (`workflow_dispatch`) | mirrors the GGUF weights to the `models-v1` release asset |
 
-## One-time setup for a fork/new repo
-
-1. Run the **Publish model release asset** workflow once (Actions tab) so the `models-v1` release exists. Everything still works without it — builds fall back to Hugging Face — but the mirror makes releases immune to upstream changes.
-2. That's it. No secrets are required; workflows use the default `GITHUB_TOKEN`.
+No setup or secrets are required; workflows use the default `GITHUB_TOKEN`. Model weights are downloaded from Hugging Face during release builds (SHA-256 pinned, cached between runs).
 
 ## Cutting a release
 
