@@ -56,6 +56,7 @@ struct ContentView: View {
                         }
                         Spacer()
                         Picker("Check every", selection: $model.intervalSeconds) {
+                            Text("15 s").tag(15.0)
                             Text("30 s").tag(30.0)
                             Text("1 min").tag(60.0)
                             Text("2 min").tag(120.0)
