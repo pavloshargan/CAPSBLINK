@@ -1,40 +1,38 @@
 # Releasing
 
-## Pipelines
-
-| Workflow | Trigger | Output |
-| --- | --- | --- |
-| `ci.yml` | push to `main`, PRs | build + tests + ad-hoc-signed .app zips (no model) as CI artifacts |
-| `release.yml` | push a `v*` tag | GitHub Release with universal DMGs for **both** apps, model bundled |
-
-No setup or secrets are required; workflows use the default `GITHUB_TOKEN`. Model weights are downloaded from Hugging Face during release builds (SHA-256 pinned, cached between runs).
+Releases are built locally and uploaded to GitHub Releases by hand.
 
 ## Cutting a release
 
-Either push a tag:
-
 ```sh
-git tag v1.0.0
-git push origin v1.0.0
+make release VERSION=1.0.0
 ```
 
-or use the Actions tab → **Release** → *Run workflow* and enter the version (e.g. `1.0.0`); the workflow creates the `v1.0.0` tag and release from the selected branch's head.
+This runs the whole chain: pinned llama.cpp xcframework (`make deps`) → model download + SHA-256 verification (`make model`) → **universal** (arm64 + x86_64) release builds → `.app` bundles (model inside CapsBlink, llama.framework embedded, ad-hoc signed) → compressed DMGs:
 
-The release workflow then: fetches the pinned llama.cpp xcframework (cached) → fetches + verifies the model (cached) → runs tests → builds universal binaries → assembles both `.app` bundles (model inside CapsBlink) → wraps DMGs → creates the GitHub Release with install notes.
+```
+dist/CapsBlink-1.0.0.dmg        (~1.1 GB — model bundled)
+dist/CapsBlinkAgents-1.0.0.dmg  (~200 kB)
+```
 
-Version stamping: the tag (minus `v`) becomes `CFBundleShortVersionString` and the DMG file names.
+Then create the release on GitHub (web UI, or `gh release create v1.0.0 dist/*.dmg`) and attach both DMGs. Tag with the matching `v1.0.0` so `git describe` stays meaningful.
+
+Version stamping: `VERSION` becomes `CFBundleShortVersionString` and the DMG file names. If omitted, `git describe` output is used.
 
 ## Code signing & notarization
 
-CI signs **ad-hoc** (`SIGN_IDENTITY=-`), which is fine for personal use but shows Gatekeeper friction (right-click → Open). For frictionless distribution:
+`make release` signs **ad-hoc** by default, which is fine for personal use but shows Gatekeeper friction (right-click → Open on first launch). For frictionless distribution with a paid Apple Developer account:
 
-1. Add a Developer ID Application certificate to the repo (e.g. via `apple-actions/import-codesign-certs`).
-2. Set `SIGN_IDENTITY="Developer ID Application: …"` in the bundle steps — `bundle-app.sh` automatically adds `--options runtime --timestamp` for real identities.
-3. Add a notarization step (`xcrun notarytool submit dist/*.dmg --wait` + `xcrun stapler staple`) after DMG creation.
+```sh
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" make release VERSION=1.0.0
+xcrun notarytool submit dist/CapsBlink-1.0.0.dmg --keychain-profile <profile> --wait
+xcrun stapler staple dist/CapsBlink-1.0.0.dmg   # repeat for the Agents DMG
+```
+
+`bundle-app.sh` automatically adds `--options runtime --timestamp` when the identity is not ad-hoc.
 
 ## Reproducibility notes
 
 - llama.cpp is pinned by release tag **and** zip SHA-256 (`scripts/fetch-llama.sh`).
 - Model weights are pinned by SHA-256 (`scripts/fetch-model.sh`, `ModelSpec`).
-- CI runs on `macos-15` images; the Swift code targets macOS 14+ and uses no APIs newer than that.
-- The only unpinned inputs are the runner's Xcode/Swift toolchain.
+- The Swift code targets macOS 14+; the only unpinned input is the local Xcode/Swift toolchain.

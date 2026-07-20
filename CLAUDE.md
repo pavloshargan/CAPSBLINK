@@ -6,4 +6,4 @@
 - The model file name/SHA-256/URLs live in `ModelSpec.default` **and** `scripts/fetch-model.sh`; change both together (docs/MODEL.md has the procedure).
 - llama.cpp C API calls are confined to `Sources/CapsBlinkLlama/LlamaSession.swift`; the pinned tag/checksum live in `scripts/fetch-llama.sh`.
 - Blinking the LED needs the macOS Input Monitoring permission; when testing from a terminal the *terminal app's* permission applies.
-- Release = push a `v*` tag (docs/RELEASING.md). Model weights are downloaded from Hugging Face (SHA-256 pinned), never committed.
+- Release = `make release VERSION=x.y.z` locally, then upload `dist/*.dmg` to a GitHub release by hand (docs/RELEASING.md). There is no CI. Model weights are downloaded from Hugging Face (SHA-256 pinned), never committed.

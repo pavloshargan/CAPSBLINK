@@ -43,6 +43,7 @@ Developer conveniences:
 - `CAPSBLINK_MODEL_PATH=/path/to/model.gguf` — point a dev build at any local GGUF.
 - Without a bundled model, CapsBlink downloads the model on first watch (status shows progress) to `~/Library/Application Support/CapsBlink/Models/`.
 - `make model` + `BUNDLE_MODEL=1 make app` — produce a fully self-contained app locally.
+- `make release VERSION=x.y.z` — the full distributable build: universal binaries, model bundled, DMGs for both apps (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## Repository layout
 
@@ -65,7 +66,7 @@ docs/                 ARCHITECTURE, MODEL, RELEASING
 
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — components, data flow, key design decisions and tradeoffs.
 - [docs/MODEL.md](docs/MODEL.md) — which model is bundled, why, and exactly how to replace or upgrade it.
-- [docs/RELEASING.md](docs/RELEASING.md) — CI/CD, tagging a release, model asset mirroring, real code signing.
+- [docs/RELEASING.md](docs/RELEASING.md) — building distributable DMGs, versioning, real code signing.
 
 ## Privacy & security
 
