@@ -34,8 +34,12 @@ fi
 echo "Building $APP $VERSION (release)..."
 swift build "${BUILD_ARGS[@]}"
 
-APP_DIR="dist/$APP.app"
-rm -rf "$APP_DIR"
+# Assemble and sign in a temp dir: building inside an iCloud-synced folder
+# (e.g. ~/Documents) races with the sync daemon, which tags the bundle with
+# FinderInfo attributes that make codesign reject it as "detritus".
+STAGING="$(mktemp -d)"
+trap 'rm -rf "$STAGING"' EXIT
+APP_DIR="$STAGING/$APP.app"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 
 cp "$BIN_DIR/$APP" "$APP_DIR/Contents/MacOS/$APP"
@@ -80,4 +84,7 @@ fi
 codesign "${SIGN_FLAGS[@]}" "$APP_DIR"
 codesign --verify --verbose=1 "$APP_DIR"
 
-echo "Built $APP_DIR"
+mkdir -p dist
+rm -rf "dist/$APP.app"
+mv "$APP_DIR" "dist/$APP.app"
+echo "Built dist/$APP.app"

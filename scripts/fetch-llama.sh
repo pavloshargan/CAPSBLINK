@@ -45,6 +45,14 @@ unzip -q "$ZIP_PATH" -x '*dSYM*' -d "$EXTRACT_DIR"
 
 rm -rf "$DEST"
 mv "$EXTRACT_DIR/build-apple/llama.xcframework" "$DEST"
+
+# We skip the (large) dSYMs, but the xcframework's Info.plist still points at
+# them, which fails multi-arch (xcbuild) builds. Drop the references.
+i=0
+while /usr/libexec/PlistBuddy -c "Print :AvailableLibraries:$i" "$DEST/Info.plist" >/dev/null 2>&1; do
+    /usr/libexec/PlistBuddy -c "Delete :AvailableLibraries:$i:DebugSymbolsPath" "$DEST/Info.plist" 2>/dev/null || true
+    i=$((i + 1))
+done
 echo "$LLAMA_TAG" > "$STAMP"
 rm -f "$ZIP_PATH"
 echo "Installed $DEST (llama.cpp ${LLAMA_TAG})"
