@@ -1,0 +1,70 @@
+name: Release
+
+# Tag a commit `vX.Y.Z` and push the tag to produce a GitHub Release with
+# universal, model-bundled DMGs for both apps.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache llama.cpp xcframework
+        uses: actions/cache@v4
+        with:
+          path: Vendor
+          key: llama-${{ hashFiles('scripts/fetch-llama.sh') }}
+
+      - name: Cache model
+        uses: actions/cache@v4
+        with:
+          path: Models
+          key: model-${{ hashFiles('scripts/fetch-model.sh') }}
+
+      - name: Fetch native dependencies
+        run: make deps
+
+      - name: Fetch model
+        run: make model
+
+      - name: Test
+        run: swift test
+
+      - name: Bundle apps (universal, model bundled)
+        env:
+          UNIVERSAL: "1"
+          BUNDLE_MODEL: "1"
+          VERSION: ${{ github.ref_name }}
+        run: |
+          export VERSION="${VERSION#v}"
+          scripts/bundle-app.sh CapsBlink
+          scripts/bundle-app.sh CapsBlinkAgents
+
+      - name: Build DMGs
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          export VERSION="${VERSION#v}"
+          scripts/make-dmg.sh CapsBlink
+          scripts/make-dmg.sh CapsBlinkAgents
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg
+          generate_release_notes: true
+          body: |
+            ## Installation
+            1. Download the DMG for the app you want:
+               - **CapsBlink** — watches a webpage, blinks Caps Lock on meaningful changes (bundled local LLM).
+               - **CapsBlinkAgents** — blinks Caps Lock when Claude Code or Codex finishes.
+            2. Drag the app to Applications and launch it from the menu bar.
+            3. The apps are ad-hoc signed: on first launch, right-click → Open,
+               or run `xattr -cr /Applications/<App>.app`.
+            4. Grant **Input Monitoring** permission when prompted (required to drive the Caps Lock LED).

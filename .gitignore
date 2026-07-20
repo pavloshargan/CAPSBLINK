@@ -1,0 +1,10 @@
+.DS_Store
+/.build
+/Vendor/
+/dist/
+/Models/
+*.gguf
+xcuserdata/
+DerivedData/
+.swiftpm/
+*.xcodeproj

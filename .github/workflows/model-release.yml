@@ -1,0 +1,35 @@
+name: Publish model release asset
+
+# Manually run this once (and after every model upgrade) to mirror the GGUF
+# weights from Hugging Face into this repository's release assets. The app's
+# downloader and release builds prefer this mirror and fall back to
+# Hugging Face if the tag does not exist.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  MODEL_RELEASE_TAG: models-v1
+
+jobs:
+  publish-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and verify model
+        run: scripts/fetch-model.sh
+
+      - name: Upload as release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$MODEL_RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$MODEL_RELEASE_TAG" \
+              --title "Model weights" \
+              --notes "GGUF model weights bundled into CapsBlink release builds. Mirrored from Hugging Face; see docs/MODEL.md." \
+              --latest=false
+          fi
+          gh release upload "$MODEL_RELEASE_TAG" Models/*.gguf --clobber
