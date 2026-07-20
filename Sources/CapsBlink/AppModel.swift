@@ -28,6 +28,9 @@ final class AppModel {
     private let settings = SettingsStore()
     private let led = CapsLockLED()
     private let watcher: PageWatcher
+    /// Held while watching so App Nap never throttles the poll loop when the
+    /// window is closed and the app runs in the background.
+    private var backgroundActivity: NSObjectProtocol?
 
     init() {
         urlString = settings.urlString
@@ -62,10 +65,18 @@ final class AppModel {
             interval: intervalSeconds,
             watchInstruction: watchInstruction
         )
+        backgroundActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep, .automaticTerminationDisabled],
+            reason: "Watching a webpage for changes"
+        )
         Task { await watcher.start(configuration) }
     }
 
     private func stopWatching() {
+        if let activity = backgroundActivity {
+            ProcessInfo.processInfo.endActivity(activity)
+            backgroundActivity = nil
+        }
         Task {
             await watcher.stop()
             await watcher.unloadClassifier() // release the model's memory
